@@ -1,0 +1,93 @@
+---
+title: 'Statistical Computing R HW #4'
+author: "Alexis Zavez"
+date: "November 6, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, out.width = "600px", echo = FALSE, fig.align = 'center'}
+knitr::include_graphics("urmc2.png")
+```
+
+# URMC Fitness Center Occupancy Analysis 
+
+## Introduction
+
+The URMC fitness center is a private gym located inside the University of Rochester Medical Center. The fitness center is relatively small, so I am interested in determining which hours of the day are considered “peak” hours. Additionally, I am interested in determining whether some days are more crowded than others. I would also like to know whether or not the center is significantly more crowded on rainy days than non-rainy days. I recently joined the fitness center, and becoming more familiar with the crowds will help me plan my days more effectively. This analysis may be of interest to busy URMC students and employees who are also interested in tracking the URMC fitness center's peak operating times.
+
+```{r Load data and packages, include = FALSE}
+fitness_t <- read.csv("urmc_data_t.csv")
+time <- read.csv("urmc_time.csv")
+save(fitness_t, file="fitness_t.rda")
+save(time, file="time.rda")
+load(file="fitness_t.rda")
+load(file = "time.rda") 
+library(ggplot2)
+library(plyr)
+library(gridExtra)
+```
+
+## Method of Data Collection
+
+Data were collected during each visit to the URMC fitness center between 9/9/2016 and 11/2/2016. There are five general areas of the facility: the studio, the squash courts, the gymnasium, the cardio equipment area, and the free weight area. I collected details on the number of members currently using each part of the facility, the current weather, as well as the date and time of the visit.
+
+## Findings
+
+My initial hypothesis was that the fitness center would be more crowded on rainy days than on clear days. On clear days, there are more opportunities to exercise outdoors, while on rainy days individuals are limited to indoor activities. However, my findings contradict this hypothesis. The mean number of members on clear days is higher than the mean number of members on rainy days. While both rainy and clear days appear to have the same minimum occupancy, the clear days mean, third quantile, and maximum occupancy counts are higher. 
+
+```{r Weather Boxplot, fig.width=5, fig.height=4, echo=FALSE, fig.align = 'center'}
+boxplot(fitness_t$Total ~ fitness_t$Rain_Ind, xlab = "Rain Indicator", ylab = "Number of Members", main = "Observed Fitness Center Member Count", col = "firebrick3", boxwex = 0.3)
+mtext("Rainy v. Clear Days")
+```
+
+This analysis may be inconclusive due to a small, biased sample size. Of the 29 visits, only four were made on rainy days. Additionally, three of the four rainy day visits were made on Saturday. Looking at the plot of member count by day of week (see below), Saturdays tend to be less crowded than most other days of the week. The fitness center certainly gets less traffic on the weekends, as members seem to visit either before or after work during the week days. in fact, the distributions of members on Saturdays and Sundays are both lower than the week day distributions.  
+
+```{r Boxplot, fig.width=8, fig.height=5, echo=FALSE, fig.align = 'center'}
+fitness_t$Day <- factor(fitness_t$Day, levels = c("Sunday","Tuesday", "Wednesday", "Thursday","Friday", "Saturday"))
+boxplot(fitness_t$Total ~ fitness_t$Day, xlab = "Day of Week", ylab = "Number of Members", main = "Member Count by Day of Week", col = "firebrick3", boxwex = 0.5)
+```
+
+Additionally, the plot above only has one Wednesday observation point, which could be a potential outlier. However, it would be best to obtain more Wednesday observation points. The plot below compares the distribution of occupancy at the fitness center on that Wednesday compared to the average occupancy on other days. There appears to be a significant increase in Wednesday occupancy in each area of the fitness center. The most drastic difference appears in the Gymnasium area. Doing some additional research, I was able to conclude that on Wednesday evenings there is a popular group weight-lifting class in the gymnasium. This could explain the significant increase in the gymnasium area. To make further conclusions, more Wednesday data should be collected. 
+
+```{r wed comparison plot prep, echo = FALSE}
+wed_subset = fitness_t[29,6:10]
+other_subset = fitness_t[1:28,6:10] 
+means <- colMeans(other_subset)
+means <- data.frame(means)
+means_t <- t(means)
+means_t <-data.frame(means_t)
+subset <- rbind(wed_subset, means_t)
+colnames(subset) <- c("Wednesday", "Avg for Other Days")
+subset <- as.matrix(subset)
+colnames(subset) <- c("Studio", "Squash", "Gymnasium", "Cardio", "Weights")
+```
+
+
+```{r wed comparison plot, fig.width=6, fig.height=4.5, fig.align = 'center', echo = FALSE}
+barplot(subset, legend = c("Wednesday", "Avg. for Other Days"), main = "Fitness Center Member Count", col = c("navyblue","firebrick3"), beside = TRUE, ylab = "Number of Members", xlab = "Areas of Fitness Center")
+```
+
+## Limitations to Findings
+
+While the data collection process is fairly straightforward, there is certainly opportunity for bias. For example, my visits to the fitness center are not random or uniform. I tend to visit either early in the AM or in the later PM hours. This is apparent in the plot below. There are no visits between 9:00 AM and 4:00 PM. While this may be sufficient for members on a 9-5 schedule, there are many members (nurses, doctors, etc.) who work alternative hours. For this reason, the analysis may be  more helpful if data could be collected at consistent intervals throughout the day. 
+
+```{r time Plot, echo=FALSE, fig.align='center', fig.height=4, fig.width=7, message=TRUE, warning=TRUE}
+load(file = "x_num2_t.rda")
+barplot(x_num2_t$freq, names.arg= x_num2_t$x, xlab = "Time of Day of Visit", ylab = "Number of Visits", main = "Distribution of Visits By Time of Day", col = "grey", las = 3)
+```
+
+##Future Analysis
+
+In the future, it would be best to have multiple data collectors who visit the fitness center throughout the day. If additional members participated and recorded data, this analysis could be much more meaningful. In addition to collecting data on the weather (rainy v. clear), it would have also been helpful to collect data on temperature. This would have provided an additional level of analysis.
+
+
+
+
+
+
+
+
